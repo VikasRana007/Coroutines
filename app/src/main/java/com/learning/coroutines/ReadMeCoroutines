@@ -1,0 +1,78 @@
+/**
+
+
+Coroutines are basically two types =:
+
+1>             Stack less
+2>             Stack full
+
+
+Kotlin implements stackless coroutine -> it means that the coroutines don't have their own stack,
+                                             so they don't map on the native thread.
+
+
+                        The biggest difference is that coroutines are very cheap,
+                        almost free: we can create thousands of them, and pay very little in terms of performance.
+
+
+         Coroutines do not replace threads, it's more like a framework to manage them
+
+    The exact definition of Coroutines: A framework to manage concurrency in a more performant and simple way
+     with its lightweight thread which is written on top of the actual threading framework to get the most out of
+      it by taking the advantage of cooperative nature of functions.
+
+
+Dispatchers: Dispatchers help coroutines in deciding the thread on which the work has to be done.
+
+ => There are majorly three types and totally 4 types of Dispatchers which are
+      IO,
+      Default => it is also a back ground thread.
+      Main. IO dispatcher is used for doing the
+     network and disk-related work. Default is used to do the CPU-intensive work. The Main is the UI thread of Android.
+
+
+   4th Dispatcher here => launch(Dispatchers.Unconfined) {
+    // Your task for which you do not care about the thread on which it should run.
+   }
+
+
+      *    Suspend functions are only allowed to be called from a coroutine or another suspend function.
+           You can see that the function fetchUser includes the keyword suspend. So, to use that, we have called 
+           it from a coroutine.
+
+
+
+
+Now, let's learn about the different ways to start the coroutines.
+          1>    launch{}    => it is like a job which is cancellable with owner lifecycle but not carry any returning value
+          2>    async{}     ==> it is a Deferred<T> job of some type and carry return value as result and this result we can get
+                                with the help of await that is available only for Deferred interface i.e
+                                =>
+                                someScope.launch {
+                                    val userJob: Deferred<User> = async(IO) { repository.getUser(id) }
+                                    //some operations, while user is being retrieved
+                                    val user = userJob.await() //here coroutine will be suspended for a while, and the method `await`
+                                     is available only from `Deferred` interface
+                                    //do the job with retrieved user, userJob is a Deferred type.
+                                }
+
+   launch{} -->        If any exception comes inside the launch block, it crashes the application if we have not handled it.
+
+   Async{}  -->        if any exception comes inside the async block, it is stored inside the resulting Deferred and is not delivered
+                       anywhere else, it will get silently dropped unless we handle it.
+
+
+
+             Scopes  ==>  in Kotlin Coroutines are very useful because we need to cancel the background task as soon as the
+                          activity is destroyed. Here, we will learn how to use scopes to handle these types of situations.
+                          In Android-specific projects, we should go with the custom scopes created by considering the LifeCycle
+                           of Activity, ViewModel, etc.
+                          The scopes are present under the kotlin extension libraries. Make sure to add the required
+                          dependencies to your project.
+
+          Now, what if we want to make the network calls in parallel? We can do using async.
+
+         While NOT using async, we can go ahead with the try-catch or the CoroutineExceptionHandler and achieve anything based on our use cases.
+         While using async, in addition to try-catch, we have two options: coroutineScope and supervisorScope.
+         With async, use supervisorScope with the individual try-catch for each task, when you want to continue with other tasks if one or some of them have failed.
+         With async, use coroutineScope with the top-level try-catch, when you do NOT want to continue with other tasks if any of them have failed.

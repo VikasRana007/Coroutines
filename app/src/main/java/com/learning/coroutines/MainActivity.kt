@@ -1,22 +1,19 @@
 package com.learning.coroutines
 
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 
 class MainActivity : AppCompatActivity() {
     private var count = 0
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        btnCount.setOnClickListener {
-            tvCount.text = count++.toString()
-        }
-        btnDownloadUserData.setOnClickListener {
+//        btnCount.setOnClickListener {
+//            tvCount.text = count++.toString()
+//        }
+//        btnDownloadUserData.setOnClickListener {
             // This dispatcher.IO is used with coroutine to shift
             //  this long running task to a separate back ground thread.
             // this launch keyword is a coroutine builder, these are the
@@ -37,11 +34,11 @@ class MainActivity : AppCompatActivity() {
             //  builder
 
 
-            // Produce ==>  this builder is used to coroutine which produces a stream of elements return an instance of receivechannel.
+            // Produce ==>  this builder is used to coroutine which produces a stream of elements return an instance of receive-channel.
 
 
-            // RunBlocking ==>  in android development we use the co routine we create using this thread will block the thread untill co routine is
-            // executing. This is mostly use for testing purpose and returns a result which can be directlly use.
+            // RunBlocking ==>  in android development we use the co routine we create using this thread will block the thread until co routine is
+            // executing. This is mostly use for testing purpose and returns a result which can be directly use.
 
 
             // Structured Concurrency ===> it is set of language feature and best practice introduces for kotlin Coroutine to avoid leaks and to manage
@@ -52,7 +49,60 @@ class MainActivity : AppCompatActivity() {
                 downloadUserData()
             }
 
-        }
+
+
+
+
+//    Now, what if we want to make the network calls in parallel? We can do using async.
+//        launch {
+//            try {
+//                val usersDeferred = async {  getUsers() }
+//                val moreUsersDeferred = async { getMoreUsers() }
+//                val users = usersDeferred.await()
+//                val moreUsers = moreUsersDeferred.await()
+//            } catch (exception: Exception) {
+//                Log.d(TAG, "$exception handled !")
+//            }
+//        }
+
+      //  Here, we will face one problem, if any network error comes, the application will crash!,
+    //  it will NOT go to the catch block. To solve this, we will have to use the coroutineScope as below:
+
+        //        launch {
+//            try {
+//                 coroutineScope {
+//            val usersDeferred = async {  getUsers() }
+//            val moreUsersDeferred = async { getMoreUsers() }
+//            val users = usersDeferred.await()
+//            val moreUsers = moreUsersDeferred.await()
+//        }
+//            } catch (exception: Exception) {
+//                Log.d(TAG, "$exception handled !")
+//            }
+//        }
+
+   //     But suppose again, we want to return an empty list for the network call which has failed and continue with
+    //     the response from the other network call. We will have to use the supervisorScope and add the try-catch block
+    //     to the individual network call as below:
+
+//        launch {
+//            supervisorScope {
+//                val usersDeferred = async { getUsers() }
+//                val moreUsersDeferred = async { getMoreUsers() }
+//                val users = try {
+//                    usersDeferred.await()
+//                } catch (e: Exception) {
+//                    emptyList<User>()
+//                }
+//                val moreUsers = try {
+//                    moreUsersDeferred.await()
+//                } catch (e: Exception) {
+//                    emptyList<User>()
+//                }
+//            }
+//        }
+
+//        }
     }
 
     private suspend fun downloadUserData() {
@@ -62,9 +112,25 @@ class MainActivity : AppCompatActivity() {
             // this is a suspended function and we can not call a suspended function from normal function so make this
                 // function using modifier suspend
             withContext(Dispatchers.Main) {
-                tvUserMessage.text = "Downloading user $i in ${Thread.currentThread().name}"
+//                tvUserMessage.text = "Downloading user $i in ${Thread.currentThread().name}"
+            }
+// we can use co routine exception handler to handle the code exception as like below
+            val handler = CoroutineExceptionHandler{
+                _, exception ->
+                Log.d("TAG", exception.toString())
             }
 
+//            just past this handler object var using + operator with the Dispatcher
+
+//            i.e
+            GlobalScope.launch(Dispatchers.Main + handler) {
+                downloadUserData() // do on IO thread and back to UI Thread
+            }
         }
     }
+
+
+
+
+
 }
