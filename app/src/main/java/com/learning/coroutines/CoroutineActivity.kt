@@ -12,9 +12,23 @@ class CoroutineActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.IO).launch {
 //            getLaunchFollowers()
 
-            getAsyncFollowers()
+//            getAsyncFollowers()
         }
 
+        CoroutineScope(Dispatchers.IO).launch {
+            val fb = getFBFollowers()
+            val insta = getInstaFollowers()
+            Log.d("Sequential Operation : ", "$fb -- $insta")
+        }
+
+        // we can improve the above function code for better performance so we can see that both calls are indiependent in the
+        // above function so we can run these calls in parallel to do that see below the example
+
+        CoroutineScope(Dispatchers.IO).launch {
+            val fb = async {getFBFollowers()}
+            val insta = async {getInstaFollowers()}
+            Log.d("Parallel Operation : ", "${fb.await()} -- ${insta.await()}")
+        }
     }
 
 
@@ -47,7 +61,8 @@ class CoroutineActivity : AppCompatActivity() {
             // Last Statement will be the return type of async coroutine builder
             getAsyncFbFollowers()
         }
-        job.await()                                // This Line is use to help to take pause of execution flow yet result get out.
+        job.await()           // This Line help to take pause of execution flow yet result get out.
+                             // That's why these are the suspend functions
         println("FB Followers : ${job.await()}")
 //        Log.d("TAG", "$fbFollowers")
     }
@@ -56,4 +71,17 @@ class CoroutineActivity : AppCompatActivity() {
         delay(1500)    // This is the suspending modifier as like yield()
         return 34
     }
+
+
+
+    private suspend fun getFBFollowers() : Int{
+        delay(1500)    // This is the suspending modifier as like yield()
+        return 45
+    }
+
+    private suspend fun getInstaFollowers() : Int{
+        delay(1500)    // This is the suspending modifier as like yield()
+        return 144
+    }
+
 }
